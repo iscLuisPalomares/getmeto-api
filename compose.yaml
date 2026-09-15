@@ -1,0 +1,8 @@
+services:
+  api:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${HOST_PORT:-8000}:8000"
