@@ -5,4 +5,4 @@ services:
       - path: .env
         required: false
     ports:
-      - "${HOST_PORT:-8000}:8000"
+      - "${HOST_PORT:-8000}:${APP_PORT:?APP_PORT must be set}"
