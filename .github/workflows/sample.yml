@@ -11,4 +11,4 @@ jobs:
         steps:
             - name: run command
               run: |
-                print "this is from github actions"
+                echo "this is from github actions"
