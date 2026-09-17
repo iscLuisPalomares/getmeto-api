@@ -1,0 +1,14 @@
+name: Sample workflow
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    write_something:
+        runs-on: ubuntu-latest
+        steps:
+            - name: run command
+              run: |
+                print "this is from github actions"
