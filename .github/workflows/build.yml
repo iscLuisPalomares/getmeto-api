@@ -1,85 +1,86 @@
 name: Build
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 # Only one build workflow can execute the versioning section at a time.
 concurrency:
-  group: versioning-main
-  cancel-in-progress: false
+    group: versioning-main
+    cancel-in-progress: false
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  write_something:
-    runs-on: ubuntu-latest
-    steps:
-        - name: run command
-          run: |
-            echo "this is from github actions"
-  build:
-    runs-on: ubuntu-latest
+    write-something:
+        runs-on: ubuntu-latest
+        
+        steps:
+            - name: run command
+              run: |
+                  echo "this is from github actions"
+    build:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      # Get the latest version tag and calculate the next one
-      
-      - name: Generate version
-        id: version
-        run: |
-          git fetch --tags
+            # Get the latest version tag and calculate the next one
 
-          latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+            - name: Generate version
+              id: version
+              run: |
+                  git fetch --tags
 
-          if [ -z "$latest" ]; then
-            next="v1.0.0"
-          else
-            version=${latest#v}
-            major=$(echo "$version" | cut -d. -f1)
-            minor=$(echo "$version" | cut -d. -f2)
-            patch=$(echo "$version" | cut -d. -f3)
+                  latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
 
-            next="v${major}.${minor}.$((patch + 1))"
-          fi
+                  if [ -z "$latest" ]; then
+                    next="v1.0.0"
+                  else
+                    version=${latest#v}
+                    major=$(echo "$version" | cut -d. -f1)
+                    minor=$(echo "$version" | cut -d. -f2)
+                    patch=$(echo "$version" | cut -d. -f3)
 
-          echo "Next version: $next"
-          echo "tag=$next" >> "$GITHUB_OUTPUT"
+                    next="v${major}.${minor}.$((patch + 1))"
+                  fi
 
-      # Create the Git tag
-      - name: Create tag
-        run: |
-          git tag "${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
+                  echo "Next version: $next"
+                  echo "tag=$next" >> "$GITHUB_OUTPUT"
 
-      # Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t my-app:${{ steps.version.outputs.tag }} .
+            # Create the Git tag
+            - name: Create tag
+              run: |
+                  git tag "${{ steps.version.outputs.tag }}"
+                  git push origin "${{ steps.version.outputs.tag }}"
 
-      # Login to ECR
-      - name: Login to ECR
-        run: |
-          # AWS authentication omitted for now
-          echo "Login to ECR"
+            # Build Docker image
+            - name: Build Docker image
+              run: |
+                  docker build \
+                    -t my-app:${{ steps.version.outputs.tag }} .
 
-      # Push image
-      - name: Push image
-        run: |
-          docker tag \
-            my-app:${{ steps.version.outputs.tag }} \
-            <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+            # Login to ECR
+            - name: Login to ECR
+              run: |
+                  # AWS authentication omitted for now
+                  echo "Login to ECR"
 
-          docker push \
-            <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+            # Push image
+            - name: Push image
+              run: |
+                  docker tag \
+                    my-app:${{ steps.version.outputs.tag }} \
+                    <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
 
-      # Deploy DEV
-      - name: Deploy DEV
-        run: |
-          echo "Deploy ${{ steps.version.outputs.tag }} to DEV"
+                  docker push \
+                    <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+
+            # Deploy DEV
+            - name: Deploy DEV
+              run: |
+                  echo "Deploy ${{ steps.version.outputs.tag }} to DEV"
