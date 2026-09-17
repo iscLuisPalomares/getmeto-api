@@ -45,10 +45,14 @@ Process environment takes precedence over `.env`, so a deployment platform can o
 
 ## Kubernetes
 
-The manifests in [`k8s/`](k8s/) deploy two replicas, configure health probes, run with restricted permissions, and provide an internal Service. Before applying them, replace the image in [`k8s/deployment.yaml`](k8s/deployment.yaml) with your registry image and tag, then set the appropriate non-secret values in [`k8s/configmap.yaml`](k8s/configmap.yaml).
+The manifests in [`k8s/`](k8s/) deploy two replicas, configure health probes, run with restricted permissions, and provide an internal Service. Set the registry image and tag in [`k8s/kustomization.yaml`](k8s/kustomization.yaml), then set the appropriate non-secret values in [`k8s/configmap.yaml`](k8s/configmap.yaml).
 
 ```bash
 kubectl apply -k k8s/
 ```
 
 For each environment, use a separate ConfigMap (or Kustomize overlay) containing its `APP_*` values. Put secrets in a Kubernetes Secret and reference it with `envFrom` or individual `valueFrom.secretKeyRef` entries; do not add secrets to this ConfigMap or bake them into the image.
+
+## Continuous deployment to EKS
+
+GitHub Actions can build, tag, push, and deploy the image after every pull-request merge to protected `main`. The workflow uses GitHub OIDC to assume a limited AWS IAM role rather than storing AWS credentials in GitHub. Complete the one-time AWS and GitHub setup in [the deployment guide](docs/github-actions-aws.md).

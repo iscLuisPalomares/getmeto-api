@@ -14,10 +14,12 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
       containers:
         - name: api
-          image: host.docker.internal:5001/getmeto-api:dev # Replace with your registry image and immutable tag.
-          imagePullPolicy: Always
+          image: getmeto-api
+          imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
                 name: getmeto-api-config

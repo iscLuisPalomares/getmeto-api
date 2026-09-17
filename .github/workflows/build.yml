@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+# Only one build workflow can execute the versioning section at a time.
+concurrency:
+  group: versioning-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Get the latest version tag and calculate the next one
+      - name: Generate version
+        id: version
+        run: |
+          git fetch --tags
+
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+
+          if [ -z "$latest" ]; then
+            next="v1.0.0"
+          else
+            version=${latest#v}
+            major=$(echo "$version" | cut -d. -f1)
+            minor=$(echo "$version" | cut -d. -f2)
+            patch=$(echo "$version" | cut -d. -f3)
+
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          echo "Next version: $next"
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+
+      # Create the Git tag
+      - name: Create tag
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      # Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t my-app:${{ steps.version.outputs.tag }} .
+
+      # Login to ECR
+      - name: Login to ECR
+        run: |
+          # AWS authentication omitted for now
+          echo "Login to ECR"
+
+      # Push image
+      - name: Push image
+        run: |
+          docker tag \
+            my-app:${{ steps.version.outputs.tag }} \
+            <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+
+          docker push \
+            <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+
+      # Deploy DEV
+      - name: Deploy DEV
+        run: |
+          echo "Deploy ${{ steps.version.outputs.tag }} to DEV"

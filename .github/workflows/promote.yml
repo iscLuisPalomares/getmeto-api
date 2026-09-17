@@ -1,0 +1,43 @@
+name: Promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to promote"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Deploy to TEST
+        run: |
+          echo "Deploy my-app:${{ inputs.version }} to TEST"
+
+  deploy-stage:
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: stage
+
+    steps:
+      - name: Deploy to STAGE
+        run: |
+          echo "Deploy my-app:${{ inputs.version }} to STAGE"
+
+  deploy-prod:
+    needs: deploy-stage
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Deploy to PROD
+        run: |
+          echo "Deploy my-app:${{ inputs.version }} to PROD"

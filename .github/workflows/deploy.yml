@@ -1,0 +1,83 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: getmeto-api-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_TO_ASSUME: ${{ vars.AWS_ROLE_TO_ASSUME }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      KUBERNETES_NAMESPACE: ${{ vars.KUBERNETES_NAMESPACE || 'default' }}
+
+    steps:
+      - name: Check out the merged revision
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "$AWS_REGION"
+          test -n "$AWS_ROLE_TO_ASSUME"
+          test -n "$ECR_REPOSITORY"
+          test -n "$EKS_CLUSTER_NAME"
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set image coordinates
+        id: image
+        run: |
+          account_id=$(aws sts get-caller-identity --query Account --output text)
+          image="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+          tag="${GITHUB_SHA::12}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push the image
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          TAG: ${{ steps.image.outputs.tag }}
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag "${IMAGE}:${TAG}" \
+            --push \
+            .
+
+      - name: Configure kubectl for EKS
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Deploy the image and wait for rollout
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          TAG: ${{ steps.image.outputs.tag }}
+        run: |
+          render_dir=$(mktemp -d)
+          cp -R k8s "$render_dir/k8s"
+          manifest_dir="$render_dir/k8s"
+          sed -i \
+            -e "s|^    newName: .*|    newName: ${IMAGE}|" \
+            -e "s|^    newTag: .*|    newTag: ${TAG}|" \
+            "$manifest_dir/kustomization.yaml"
+          kubectl -n "$KUBERNETES_NAMESPACE" apply -k "$manifest_dir"
+          kubectl -n "$KUBERNETES_NAMESPACE" rollout status deployment/getmeto-api --timeout=5m
