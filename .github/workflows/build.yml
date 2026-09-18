@@ -68,14 +68,16 @@ jobs:
               run: |
                   docker build \
                     -t my-app:${{ steps.version.outputs.tag }} .
+            
+            - name: Check AWS identity
+              run: aws sts get-caller-identity
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v5
               with:
                   role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
                   aws-region: ${{ env.AWS_REGION }}
-            - name: Check AWS identity
-              run: aws sts get-caller-identity
+            
             
             - name: Login to Amazon ECR
               id: login-ecr
