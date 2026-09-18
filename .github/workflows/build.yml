@@ -15,20 +15,8 @@ permissions:
     id-token: write
 
 jobs:
-    write-something:
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: run command
-              run: |
-                  echo "this is from github actions"
     build:
         runs-on: ubuntu-latest
-        env:
-            AWS_REGION: us-east-1
-            ECR_REGISTRY: 343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto
-            ECR_REPOSITORY: mygetmeto_namespace/getmeto
-
         steps:
             - uses: actions/checkout@v4
               with:
@@ -68,16 +56,12 @@ jobs:
               run: |
                   docker build \
                     -t my-app:${{ steps.version.outputs.tag }} .
-            
-            - name: Check AWS identity
-              run: aws sts get-caller-identity
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v5
               with:
                   role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
-                  aws-region: ${{ env.AWS_REGION }}
-            
+                  aws-region: us-east-1
             
             - name: Login to Amazon ECR
               id: login-ecr
@@ -88,10 +72,10 @@ jobs:
               run: |
                   docker tag \
                     my-app:${{ steps.version.outputs.tag }} \
-                    ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.version.outputs.tag }}
+                    343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:${{ steps.version.outputs.tag }}
 
                   docker push \
-                    ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.version.outputs.tag }}
+                    343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:${{ steps.version.outputs.tag }}
 
             # Deploy DEV
             - name: Deploy DEV
