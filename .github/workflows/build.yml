@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: false
 
 permissions:
-    contents: write
+    contents: read
     id-token: write
 
 jobs:
@@ -26,8 +26,8 @@ jobs:
         runs-on: ubuntu-latest
         env:
             AWS_REGION: us-east-1
-            ECR_REGISTRY: 343782217094.dkr.ecr.us-east-1.amazonaws.com
-            ECR_REPOSITORY: myapps/getmeto
+            ECR_REGISTRY: 343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto
+            ECR_REPOSITORY: mygetmeto_namespace/getmeto
 
         steps:
             - uses: actions/checkout@v4
