@@ -74,7 +74,9 @@ jobs:
               with:
                   role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
                   aws-region: ${{ env.AWS_REGION }}
-
+            - name: Check AWS identity
+              run: aws sts get-caller-identity
+            
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2
