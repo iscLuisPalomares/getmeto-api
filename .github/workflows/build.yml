@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
     contents: write
+    id-token: write
 
 jobs:
     write-something:
@@ -21,67 +22,74 @@ jobs:
             - name: run command
               run: |
                   echo "this is from github actions"
-                  echo "USE THIS KEY: ${{secrets.AWS_ACCESS_KEY_ID}}"
-    # build:
-    #     runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
+        env:
+            AWS_REGION: us-east-1
+            ECR_REGISTRY: 343782217094.dkr.ecr.us-east-1.amazonaws.com
+            ECR_REPOSITORY: myapps/getmeto
 
-    #     steps:
-    #         - uses: actions/checkout@v4
-    #           with:
-    #               fetch-depth: 0
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-    #         # Get the latest version tag and calculate the next one
+            # Get the latest version tag and calculate the next one
 
-    #         - name: Generate version
-    #           id: version
-    #           run: |
-    #               git fetch --tags
+            - name: Generate version
+              id: version
+              run: |
+                  git fetch --tags
 
-    #               latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+                  latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
 
-    #               if [ -z "$latest" ]; then
-    #                 next="v1.0.0"
-    #               else
-    #                 version=${latest#v}
-    #                 major=$(echo "$version" | cut -d. -f1)
-    #                 minor=$(echo "$version" | cut -d. -f2)
-    #                 patch=$(echo "$version" | cut -d. -f3)
+                  if [ -z "$latest" ]; then
+                    next="v1.0.0"
+                  else
+                    version=${latest#v}
+                    major=$(echo "$version" | cut -d. -f1)
+                    minor=$(echo "$version" | cut -d. -f2)
+                    patch=$(echo "$version" | cut -d. -f3)
 
-    #                 next="v${major}.${minor}.$((patch + 1))"
-    #               fi
+                    next="v${major}.${minor}.$((patch + 1))"
+                  fi
 
-    #               echo "Next version: $next"
-    #               echo "tag=$next" >> "$GITHUB_OUTPUT"
+                  echo "Next version: $next"
+                  echo "tag=$next" >> "$GITHUB_OUTPUT"
 
-    #         # Create the Git tag
-    #         - name: Create tag
-    #           run: |
-    #               git tag "${{ steps.version.outputs.tag }}"
-    #               git push origin "${{ steps.version.outputs.tag }}"
+            # Create the Git tag
+            - name: Create tag
+              run: |
+                  git tag "${{ steps.version.outputs.tag }}"
+                  git push origin "${{ steps.version.outputs.tag }}"
 
-    #         # Build Docker image
-    #         - name: Build Docker image
-    #           run: |
-    #               docker build \
-    #                 -t my-app:${{ steps.version.outputs.tag }} .
+            # Build Docker image
+            - name: Build Docker image
+              run: |
+                  docker build \
+                    -t my-app:${{ steps.version.outputs.tag }} .
 
-    #         # Login to ECR
-    #         - name: Login to ECR
-    #           run: |
-    #               # AWS authentication omitted for now
-    #               echo "Login to ECR"
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
+                  aws-region: ${{ env.AWS_REGION }}
 
-    #         # Push image
-    #         - name: Push image
-    #           run: |
-    #               docker tag \
-    #                 my-app:${{ steps.version.outputs.tag }} \
-    #                 <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
 
-    #               docker push \
-    #                 <ECR_URL>/my-app:${{ steps.version.outputs.tag }}
+            # Push image
+            - name: Push image
+              run: |
+                  docker tag \
+                    my-app:${{ steps.version.outputs.tag }} \
+                    ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.version.outputs.tag }}
 
-    #         # Deploy DEV
-    #         - name: Deploy DEV
-    #           run: |
-    #               echo "Deploy ${{ steps.version.outputs.tag }} to DEV"
+                  docker push \
+                    ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ steps.version.outputs.tag }}
+
+            # Deploy DEV
+            - name: Deploy DEV
+              run: |
+                  echo "Deploy ${{ steps.version.outputs.tag }} to DEV"
