@@ -20,7 +20,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+      - name: Debug OIDC token
+        run: |
+          curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
       # Get the latest version tag and calculate the next one
 
       - name: Generate version
