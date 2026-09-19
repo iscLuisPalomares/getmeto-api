@@ -22,8 +22,21 @@ jobs:
         uses: actions/checkout@v4
       - name: Debug OIDC token
         run: |
-          curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq
+          TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+
+          # Decode the JWT payload (2nd segment), Python 3 handles base64url padding cleanly
+          PAYLOAD=$(echo "$TOKEN" | cut -d '.' -f2)
+          python3 -c "
+          import base64, json, sys
+          payload = '$PAYLOAD'
+          padded = payload + '=' * (-len(payload) % 4)
+          decoded = base64.urlsafe_b64decode(padded)
+          claims = json.loads(decoded)
+          # print only the fields we care about, not the whole token
+          for key in ['aud', 'sub', 'repository', 'repository_owner', 'ref', 'event_name']:
+              print(f'{key}: {claims.get(key)}')
+          "
         env:
           ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
           ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
