@@ -1,0 +1,24 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::343782217094:oidc-provider/token.actions.githubusercontent.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:repository_owner": "iscLuisPalomares",
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": [
+                        "repo:iscLuisPalomares@5873135/getmeto-api@1372090883:ref:refs/heads/main",
+                        "repo:iscLuisPalomares@5873135/getmeto-api@1372090883:*"
+                    ]
+                }
+            }
+        }
+    ]
+}
