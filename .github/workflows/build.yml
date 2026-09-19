@@ -23,43 +23,43 @@ jobs:
       
       # Get the latest version tag and calculate the next one
 
-      # - name: Generate version
-      #   id: version
-      #   run: |
-      #     git fetch --tags
+      - name: Generate version
+        id: version
+        run: |
+          git fetch --tags
 
-      #     latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
 
-      #     if [ -z "$latest" ]; then
-      #       next="v1.0.0"
-      #     else
-      #       version=${latest#v}
-      #       major=$(echo "$version" | cut -d. -f1)
-      #       minor=$(echo "$version" | cut -d. -f2)
-      #       patch=$(echo "$version" | cut -d. -f3)
+          if [ -z "$latest" ]; then
+            next="v1.0.0"
+          else
+            version=${latest#v}
+            major=$(echo "$version" | cut -d. -f1)
+            minor=$(echo "$version" | cut -d. -f2)
+            patch=$(echo "$version" | cut -d. -f3)
 
-      #       next="v${major}.${minor}.$((patch + 1))"
-      #     fi
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
 
-      #     echo "Next version: $next"
-      #     echo "tag=$next" >> "$GITHUB_OUTPUT"
+          echo "Next version: $next"
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
 
-      # # Create the Git tag
-      # - name: Create tag
-      #   run: |
-      #     git tag "${{ steps.version.outputs.tag }}"
-      #     git push origin "${{ steps.version.outputs.tag }}"
+      # Create the Git tag
+      - name: Create tag
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
 
       # Build Docker image
-      # - name: Build Docker image
-      #   run: |
-      #     docker build \
-      #       -t my-app:${{ steps.version.outputs.tag }} .
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t my-app:${{ steps.version.outputs.tag }} .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
+          role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_ecrimagebuilder_role
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
