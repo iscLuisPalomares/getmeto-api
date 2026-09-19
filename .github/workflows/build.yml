@@ -61,7 +61,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::343782217094:role/GetMeTo_image_handler
-          aws-region: us-east-1
+          aws-region: us-west-1
 
       - name: Login to Amazon ECR
         id: login-ecr
