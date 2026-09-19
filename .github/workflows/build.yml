@@ -41,6 +41,19 @@ jobs:
         env:
           ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
           ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+
+      - name: Manually test AssumeRoleWithWebIdentity
+        run: |
+          TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+
+          aws sts assume-role-with-web-identity \
+            --role-arn arn:aws:iam::343782217094:role/GetMeTo_ecrimagebuilder_role \
+            --role-session-name manual-test \
+            --web-identity-token "$TOKEN"
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
       # Get the latest version tag and calculate the next one
 
       - name: Generate version
