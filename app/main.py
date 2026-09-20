@@ -1,3 +1,5 @@
+import random
+
 from fastapi import FastAPI
 
 from app.config import get_settings
@@ -15,3 +17,8 @@ def root() -> dict[str, str]:
 @app.get("/health", tags=["service"])
 def health_check() -> dict[str, str]:
     return {"status": "ok", "environment": settings.app_env}
+
+
+@app.get("/randomvalue", tags=["service"])
+def random_value() -> dict[str, int]:
+    return {"value": random.randint(0, 100)}
