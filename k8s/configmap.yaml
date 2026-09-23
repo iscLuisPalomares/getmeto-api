@@ -4,7 +4,7 @@ metadata:
   name: getmeto-api-config
 data:
   APP_NAME: GetMeTo API
-  APP_ENV: production
+  APP_ENV: development
   APP_DEBUG: "false"
   APP_HOST: 0.0.0.0
   # Keep this in sync with deployment.yaml and service.yaml if changed.
