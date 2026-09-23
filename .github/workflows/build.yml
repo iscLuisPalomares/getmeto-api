@@ -76,7 +76,17 @@ jobs:
           docker push \
             343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:${{ steps.version.outputs.tag }}
 
-      # Deploy DEV
-      - name: Deploy DEV
+      - name: Configure kubeconfig
         run: |
-          echo "Deploy ${{ steps.version.outputs.tag }} to DEV"
+          aws eks update-kubeconfig \
+            --region us-east-1 \
+            --name getmeto-dev-cluster
+
+      # Deploy DEV EKS
+      - name: Deploy DEV EKS
+        run: |
+          kubectl set image deployment/getmeto-api \
+            api=343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:${{ steps.version.outputs.tag }} \
+            --namespace default
+
+          kubectl rollout status deployment/getmeto-api --namespace default --timeout=120s
