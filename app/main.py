@@ -22,3 +22,7 @@ def health_check() -> dict[str, str]:
 @app.get("/randomvalue", tags=["service"])
 def random_value() -> dict[str, int]:
     return {"value": random.randint(0, 100)}
+
+@app.get("/bigrandomvalue", tags=["service"])
+def random_value() -> dict[str, int]:
+    return {"value": random.randint(0, 1000)}
