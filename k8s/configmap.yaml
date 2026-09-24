@@ -2,10 +2,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: getmeto-api-config
+  namespace: dev
 data:
-  APP_NAME: GetMeTo API
-  APP_ENV: development
-  APP_DEBUG: "false"
-  APP_HOST: 0.0.0.0
-  # Keep this in sync with deployment.yaml and service.yaml if changed.
-  APP_PORT: "8000"
+  app_name: "getmeto-api"
+  app_env: "dev"
+  app_debug: "false"
+  app_host: "0.0.0.0"
+  app_port: "8000"
