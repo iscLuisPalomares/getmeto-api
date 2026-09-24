@@ -88,5 +88,5 @@ jobs:
           kubectl set image deployment/getmeto-api \
             api=343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:${{ steps.version.outputs.tag }} \
             --namespace default
-
+            
           kubectl rollout status deployment/getmeto-api --namespace default --timeout=120s
