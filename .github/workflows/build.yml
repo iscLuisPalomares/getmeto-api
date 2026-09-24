@@ -81,7 +81,7 @@ jobs:
         run: |
           aws eks update-kubeconfig \
             --region us-east-1 \
-            --name getmeto-cluster
+            --name getmeto-dev-cluster
 
       # Deploy DEV
       - name: Deploy DEV
