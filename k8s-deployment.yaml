@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: getmeto-api
+  namespace: dev
 spec:
   replicas: 2
   selector:
@@ -18,7 +19,7 @@ spec:
         runAsGroup: 10001
       containers:
         - name: api
-          image: getmeto-api
+          image: 343782217094.dkr.ecr.us-east-1.amazonaws.com/mygetmeto_namespace/getmeto:v1.0.0
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -26,6 +27,13 @@ spec:
           ports:
             - name: http
               containerPort: 8000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           readinessProbe:
             httpGet:
               path: /health

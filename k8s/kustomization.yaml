@@ -1,8 +1,0 @@
-resources:
-  - configmap.yaml
-  - deployment.yaml
-  - service.yaml
-images:
-  - name: getmeto-api
-    newName: 343782217094.dkr.ecr.us-east-1.amazonaws.com/myapps/getmeto
-    newTag: 0fd6fff
